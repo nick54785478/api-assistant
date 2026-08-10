@@ -34,7 +34,7 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         String lowerMsg = userMessage.trim().toLowerCase();
         boolean isApproval = lowerMsg.equals("ok") || lowerMsg.equals("好") || lowerMsg.equals("繼續") || 
                              lowerMsg.equals("下一步") || lowerMsg.equals("next") || lowerMsg.equals("y") || 
-                             lowerMsg.equals("yes") || lowerMsg.equals("proceed");
+                             lowerMsg.equals("yes") || lowerMsg.equals("proceed") || lowerMsg.equals("完成") || lowerMsg.equals("done");
                              
         boolean isCancel = lowerMsg.equals("取消") || lowerMsg.equals("退出") || lowerMsg.equals("停止") ||
                            lowerMsg.equals("cancel") || lowerMsg.equals("abort") || lowerMsg.equals("quit") || lowerMsg.equals("exit");
@@ -57,13 +57,14 @@ public class PlaybookAgentStrategy implements ChatStrategy {
     public String getSystemPrompt(String defaultSystemPrompt, AgentSession session, Playbook playbook, List<String> allowedToolNames, String sessionId) {
         int stepIndex = session.getCurrentStepIndex();
         
-        if (session.getPlaybookId() == null) {
-            return defaultSystemPrompt + "\n\n【系統指示】：劇本執行已取消。請回覆：「🛑 已取消劇本執行。模式已切換回一般助手。請問還有什麼可以幫您的嗎？」";
+        // Edge case: preProcess just advanced the step, and it has finished the playbook now
+        if (stepIndex >= playbook.getSteps().size()) {
+            session.unbindPlaybook(); // 自動解除綁定
+            return defaultSystemPrompt + "\n\n【系統指示】：此測試劇本的所有步驟已全部順利執行完畢！請直接回覆使用者：「🎉 所有測試步驟已執行完畢！劇本順利完成。模式已切換回一般助手。請問還有什麼可以幫您的嗎？」";
         }
         
-        // Edge case: preProcess just advanced the step, and it might have finished the playbook now
-        if (stepIndex >= playbook.getSteps().size()) {
-            return defaultSystemPrompt + "\n\n【系統指示】：此測試劇本的所有步驟已全部執行完畢！\n若使用者無特別指示，請回覆：「🎉 所有測試步驟已執行完畢！劇本順利完成。」。\n若使用者有新的需求或要求呼叫特定 API，請恢復正常助手模式，根據其需求呼叫對應工具。";
+        if (session.getPlaybookId() == null) {
+            return defaultSystemPrompt + "\n\n【系統指示】：劇本執行已中斷。請回覆：「🛑 已退出劇本執行模式。已切換回一般助手。請問還有什麼可以幫您的嗎？」";
         }
         
         PlaybookStep step = playbook.getSteps().get(stepIndex);
@@ -111,7 +112,12 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         sb.append("\n=== 規則 ===");
         sb.append("\n1. 使用 Tool Calling 機制呼叫工具，不要輸出 JSON 文字。");
         sb.append("\n2. 劇本預設參數直接使用。來自已完成步驟的結果（如 Token）從對話歷史中提取，禁止編造。");
-        sb.append("\n3. 完成後報告結果，詢問是否繼續下一步。");
+        sb.append("\n3. 當任務完成並報告結果後，請務必在回覆的最下方附上以下操作提示（請一字不漏地加上）：\n");
+        if (stepIndex == playbook.getSteps().size() - 1) {
+            sb.append("   💡 **劇本操作提示**：\n   - 輸入 **完成** 或 **退出**：結束劇本模式並清除對話上下文");
+        } else {
+            sb.append("   💡 **劇本操作提示**：\n   - 輸入 **OK** 或 **下一步**：繼續執行下一個步驟\n   - 輸入 **取消** 或 **退出**：終止當前劇本模式");
+        }
         sb.append("\n4. 用繁體中文自然語言回覆。");
         
         return sb.toString();

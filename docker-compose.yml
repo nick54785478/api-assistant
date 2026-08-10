@@ -1,0 +1,65 @@
+services:
+  # =========================================================================
+  # 外部業務與基礎設施層 (Existing Infrastructure)
+  # 供您現有的 RagAssistantQueryService 使用
+  # =========================================================================
+  
+  # 1. 關聯式與向量資料庫 (DB & VectorDB)：使用 PostgreSQL + pgvector
+  # (這裡參考您的範例，pgvector 完美地將一般 DB 與 Vector DB 合而為一)
+  postgres-db:
+    image: pgvector/pgvector:pg16
+    container_name: api-assist-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: api_assist_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: "no"
+
+  # =========================================================================
+  # MCP 整合層 (MCP Server)
+  # =========================================================================
+  
+  # 2. MCP 伺服器 (開發中預留)
+  # 這裡為您後續要開發的 MCP Server 預留位置。初期開發時，您可能會先在本地用 IDE 跑，
+  # 等代碼寫好後，再把註解打開，包裝成 Docker 運行。
+  # mcp-server:
+  #   build: .
+  #   container_name: api-assist-mcp-server
+  #   environment:
+  #     - DB_HOST=postgres-db
+  #   ports:
+  #     - "3001:3001" # 視您選擇的 MCP 通訊方式 (SSE 等) 而定
+  #   depends_on:
+  #     - postgres-db
+  #   restart: "no"
+
+  # =========================================================================
+  # AI 助手基礎設施 (選配)
+  # =========================================================================
+  
+  # 3. 本地模型引擎：Ollama
+  # [重點提醒]：因為我們走「方案一 (現成客戶端)」，若您打算使用 Claude Desktop，
+  # 則完全不需要 Ollama，因為它會直接走雲端 API。
+  # 但若您打算找一個能連本地模型的現成 MCP Client，可以把此容器跑起來。
+  ollama:
+    image: ollama/ollama:latest
+    container_name: api-assist-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: "no"
+
+volumes:
+  pg_data:

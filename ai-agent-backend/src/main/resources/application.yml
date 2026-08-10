@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: ai-agent-backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/api_assist_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen2.5
+          num-predict: 4096
+          temperature: 0.1
+          top-p: 0.9
+    mcp:
+      client:
+        stdio:
+          connections:
+            api-assist:
+              command: node
+              args: 
+                - D:\桌面\VibeCodingWorkSpace\api-assistant\mcp-server\build\index.js
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+logging:
+  charset:
+    console: UTF-8
+    file: UTF-8

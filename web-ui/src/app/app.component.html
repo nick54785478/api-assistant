@@ -1,0 +1,77 @@
+<div class="h-screen flex overflow-hidden" style="background-color: var(--p-surface-ground);">
+  <app-sidebar [name]="name" [username]="username" (openSessionSettings)="openSessionSettings($event)"
+    (openNewChat)="openNewChatDialog()" (openManagePlaybooks)="openManagePlaybooks($event)">
+  </app-sidebar>
+
+  <!-- Chat Area -->
+  <app-chat-area *ngIf="isChatRoute" class="flex-1 flex overflow-hidden" [messages]="messages"
+    [isWaitingForResponse]="isWaitingForResponse" [(userInput)]="userInput" [agentMode]="agentMode" (onSendMessage)="sendMessage()"
+    (openSettings)="openGlobalSettings()">
+  </app-chat-area>
+
+  <div *ngIf="!isChatRoute" class="flex-1 overflow-auto bg-gray-50 h-full">
+    <router-outlet></router-outlet>
+  </div>
+</div>
+
+<app-mcp-tool-manager *ngIf="showMcpManager" [mode]="mcpMode" [sessionId]="mcpSessionId"
+  (close)="showMcpManager = false"></app-mcp-tool-manager>
+
+<!-- Global Load Mask -->
+<div *ngIf="loadingService.isLoading()"
+  class="fixed top-0 left-0 w-full h-full flex align-items-center justify-content-center z-5"
+  style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px);">
+  <p-progressSpinner strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+</div>
+
+<!-- Global Toast Notifications -->
+<p-toast position="bottom-right"></p-toast>
+
+<!-- Global Confirm Dialog -->
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+<!-- New Chat Dialog -->
+<p-dialog header="Start New Chat" [(visible)]="showNewChatDialog" [modal]="true" [style]="{ width: '30vw' }">
+  <div class="flex flex-column gap-3 mt-3">
+    <div class="flex flex-column gap-2">
+      <label for="initialMessage" class="font-semibold text-sm">Initial Message</label>
+      <input pInputText id="initialMessage" [(ngModel)]="newChatInitialMessage"
+        placeholder="e.g. Help me analyze this repo" />
+    </div>
+    <div class="flex flex-column gap-2">
+      <label for="playbook" class="font-semibold text-sm">Playbook (Optional)</label>
+      <p-dropdown id="playbook" [options]="availablePlaybooks" [(ngModel)]="selectedPlaybookId" optionLabel="name"
+        optionValue="id" placeholder="Select a Playbook" [showClear]="true">
+      </p-dropdown>
+    </div>
+    <div class="flex justify-content-end gap-2 mt-4">
+      <p-button label="Cancel" severity="secondary" (click)="showNewChatDialog = false" [text]="true"></p-button>
+      <p-button label="Start" (click)="startNewChat()" [disabled]="!newChatInitialMessage.trim()"></p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Playbooks Dialog -->
+<p-dialog [header]="playbookViewMode === 'list' ? 'Manage Playbooks' : (playbookViewMode === 'edit' ? 'Edit Playbook' : 'Create Playbook')" 
+          [(visible)]="showPlaybooksDialog" [modal]="true" [maximizable]="true"
+          [style]="{ width: '80vw', height: '85vh' }" [contentStyle]="{ padding: '0' }"
+          [baseZIndex]="10000">
+  <div class="h-full flex flex-column bg-gray-50 overflow-hidden">
+    <!-- Playbooks List -->
+    <div *ngIf="playbookViewMode === 'list'" class="h-full overflow-auto p-4">
+      <app-playbook-list 
+        [agentSessionId]="selectedPlaybookSessionId" (onCreatePlaybook)="openCreatePlaybook()"
+        (onEditPlaybook)="openEditPlaybook($event)"
+        (onExecutePlaybook)="executePlaybook($event)">
+      </app-playbook-list>
+    </div>
+
+    <!-- Playbook Form -->
+    <div *ngIf="playbookViewMode === 'create' || playbookViewMode === 'edit'" class="h-full overflow-hidden flex flex-column">
+      <app-playbook-create class="flex-1 overflow-auto"
+        [agentSessionId]="selectedPlaybookSessionId" [playbookId]="editPlaybookId" (onSaved)="onPlaybookSaved()"
+        (onCanceled)="onPlaybookCanceled()">
+      </app-playbook-create>
+    </div>
+  </div>
+</p-dialog>

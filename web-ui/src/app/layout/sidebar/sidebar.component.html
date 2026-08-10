@@ -1,0 +1,84 @@
+<aside class="w-20rem hidden md:flex flex-column border-right-1 shadow-1 z-1 h-full" style="border-color: var(--p-surface-200); background-color: var(--p-surface-0);">
+  <div class="p-4 flex align-items-center gap-3 border-bottom-1" style="border-color: var(--p-surface-200);">
+    <!-- Logo Gradient fixed with --p- variables -->
+    <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center" style="background: linear-gradient(135deg, var(--p-primary-400), var(--p-primary-600)); cursor: pointer;" routerLink="/">
+      <i class="pi pi-bolt text-white text-xl"></i>
+    </div>
+    <div class="cursor-pointer" routerLink="/">
+      <h2 class="m-0 text-xl font-semibold" style="color: var(--p-text-color);">API Assistant</h2>
+      <span class="text-sm" style="color: var(--p-text-muted-color);">MCP Server Powered</span>
+    </div>
+  </div>
+
+  <div class="p-2 border-bottom-1" style="border-color: var(--p-surface-200); display: none;">
+    <!-- Playbooks moved to Agent specific menu -->
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-3">
+    <div class="flex justify-content-between align-items-center mb-3 px-2">
+      <div class="text-xs font-semibold uppercase" style="color: var(--p-text-muted-color);">Recent Chats</div>
+      <button class="p-link w-2rem h-2rem border-circle border-none flex align-items-center justify-content-center hover-bg flex-shrink-0" (click)="openNewChat.emit()" title="New Chat">
+        <i class="pi pi-plus" style="color: var(--p-text-muted-color); font-size: 1rem;"></i>
+      </button>
+    </div>
+    
+    <ng-container *ngFor="let session of sessions">
+      <div class="p-3 border-round-xl cursor-pointer transition-colors transition-duration-150 flex align-items-center gap-3 mb-2" 
+           [ngClass]="{'hover-bg': activeSessionId !== session.sessionId}"
+           [style.background-color]="activeSessionId === session.sessionId ? 'var(--p-primary-50)' : 'transparent'"
+           (click)="selectSession(session.sessionId)">
+        
+        <i class="pi pi-message font-semibold" 
+           [style.color]="activeSessionId === session.sessionId ? 'var(--p-primary-500)' : 'var(--p-text-muted-color)'"></i>
+        
+        <!-- View Mode -->
+        <div *ngIf="editingSessionId !== session.sessionId" class="flex-1 flex justify-content-between align-items-center overflow-hidden">
+          <span class="text-sm font-semibold text-overflow-ellipsis white-space-nowrap overflow-hidden" 
+                [style.color]="activeSessionId === session.sessionId ? 'var(--p-primary-600)' : 'var(--p-text-color)'">
+            {{ session.name }}
+          </span>
+          
+          <button class="p-link w-2rem h-2rem border-circle border-none flex align-items-center justify-content-center hover-bg flex-shrink-0" 
+                  (click)="openMenu($event, menu, session)">
+            <i class="pi pi-ellipsis-v" style="color: var(--p-text-muted-color); font-size: 1rem;"></i>
+          </button>
+        </div>
+
+        <!-- Edit Mode -->
+        <div *ngIf="editingSessionId === session.sessionId" class="flex-1 flex align-items-center gap-2" (click)="$event.stopPropagation()">
+          <input type="text" class="p-inputtext p-component p-inputtext-sm w-full" 
+                 [(ngModel)]="editNameValue" 
+                 (keyup.enter)="saveEdit(session, $event)"
+                 (keyup.escape)="cancelEdit($event)"
+                 autofocus>
+          <button class="p-link w-2rem h-2rem border-circle border-none flex align-items-center justify-content-center hover-bg flex-shrink-0" 
+                  (click)="saveEdit(session, $event)">
+            <i class="pi pi-check" style="color: var(--p-primary-500); font-size: 1rem;"></i>
+          </button>
+          <button class="p-link w-2rem h-2rem border-circle border-none flex align-items-center justify-content-center hover-bg flex-shrink-0" 
+                  (click)="cancelEdit($event)">
+            <i class="pi pi-times" style="color: var(--p-text-muted-color); font-size: 1rem;"></i>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+    
+    <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body"></p-menu>
+    
+    <div *ngIf="sessions.length === 0" class="text-sm text-center p-3" style="color: var(--p-text-muted-color);">
+      No recent chats
+    </div>
+  </div>
+
+  <!-- Removed API Settings Button from Sidebar -->
+  <div class="p-3 border-top-1" style="border-color: var(--p-surface-200);">
+    <div class="p-3 border-round-xl cursor-pointer transition-colors flex align-items-center gap-3 hover-bg">
+      <p-avatar image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png" shape="circle"></p-avatar>
+      <div class="flex flex-column flex-1 overflow-hidden" style="max-width: 140px;">
+        <span class="text-sm font-semibold text-overflow-ellipsis white-space-nowrap overflow-hidden" style="color: var(--p-text-color);">{{ name || username }}</span>
+        <span *ngIf="name" class="text-xs text-overflow-ellipsis white-space-nowrap overflow-hidden" style="color: var(--p-text-muted-color); margin-top: 2px;">{{ username }}</span>
+      </div>
+      <i class="pi pi-cog ml-auto" style="color: var(--p-text-muted-color);"></i>
+    </div>
+  </div>
+</aside>

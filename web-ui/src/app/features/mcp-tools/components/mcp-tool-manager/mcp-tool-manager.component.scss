@@ -1,0 +1,187 @@
+.mcp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.75);
+  /* 深藍色半透明 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.mcp-modal-content {
+  background: rgba(30, 41, 59, 0.85);
+  /* Tailwind slate-800 */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 1200px;
+  max-height: 90vh;
+  height: 90vh;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 捲軸自訂 */
+.list-panel,
+.editor-panel {
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+
+.list-panel::-webkit-scrollbar,
+.editor-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.list-panel::-webkit-scrollbar-thumb,
+.editor-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+/* Tool Card */
+.tool-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  &.active {
+    background: rgba(59, 130, 246, 0.15);
+    /* primary blue tint */
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Method Badges */
+.method-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+
+  &.get {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+  }
+
+  &.post {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+  }
+
+  &.put {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+
+  &.delete {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+  }
+}
+
+/* 深色表單覆寫 (針對 PrimeNG) */
+::ng-deep {
+
+  /* 強制鎖定輸入框與下拉選單的高度，確保水平完美對齊，並統一背景顏色 */
+  input.dark-input,
+  .dark-dropdown,
+  .dark-dropdown>.p-select {
+    height: 44px !important;
+    background-color: rgba(30, 41, 59, 1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* 聚焦狀態的光暈 */
+  input.dark-input:focus,
+  .dark-dropdown.p-focus,
+  .dark-dropdown>.p-select.p-focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 1px var(--primary-color) !important;
+  }
+
+  /* 完美置中並對齊下拉選單內的文字 */
+  .dark-dropdown .p-select-label {
+    display: flex !important;
+    align-items: center !important;
+    padding-left: 0.75rem !important;
+    /* 與一般 input 相同的左間距 */
+    height: 100% !important;
+    color: #fff !important;
+  }
+
+  .mcp-card {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    box-shadow: none !important;
+  }
+}
+
+/* 動畫 */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

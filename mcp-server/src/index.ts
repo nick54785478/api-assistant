@@ -10,6 +10,7 @@ import { getDb } from "./db.js";
 import { startApiServer } from "./api.js";
 
 // Initialize the MCP Server
+// @ts-ignore: Server is deprecated in favor of McpServer, but we keep it for minimal changes and low-level control.
 const server = new Server(
   {
     name: "api-assistant-mcp-server",

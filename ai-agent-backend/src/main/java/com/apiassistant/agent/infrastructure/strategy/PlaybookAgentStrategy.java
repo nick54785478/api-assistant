@@ -95,7 +95,14 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         
         if (step.getRequiredTool() != null && !step.getRequiredTool().isBlank()) {
             String resolvedToolName = resolveToolName(step.getRequiredTool(), allowedToolNames);
-            sb.append("\n必須呼叫的工具: ").append(resolvedToolName).append("\n");
+            if (resolvedToolName != null) {
+                // Because we now strip the prefix dynamically in ChatApplicationService,
+                // the LLM will see the original clean name, so we can just use the original name!
+                String cleanToolName = resolvedToolName.replaceFirst("^s_[a-zA-Z0-9]{1,10}_", "");
+                sb.append("\n【強制指令 - 重要！】\n");
+                sb.append("你目前處於劇本模式。你 **必須且只能** 透過 Function Calling 機制呼叫名稱為 '").append(cleanToolName).append("' 的工具來執行此步驟。\n");
+                sb.append("請 **立刻** 輸出 Tool Call (Function Call)。絕對不可直接回答純文字或擅自假裝執行成功，否則系統將崩潰！\n");
+            }
         }
         
         if (step.getCustomInputs() != null && !step.getCustomInputs().isEmpty()) {

@@ -3,7 +3,7 @@ package com.apiassistant.agent.infrastructure.adapter;
 import com.apiassistant.agent.application.port.out.SessionToolProviderPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,7 +19,6 @@ public class SessionToolProviderAdapter implements SessionToolProviderPort {
     private final RestTemplate restTemplate;
 
     @Override
-    @Cacheable(value = "sessionTools", key = "#sessionId", unless = "#result == null")
     public List<String> getSessionToolNames(String sessionId) {
         log.info("Fetching allowed tools for session {} from Express API", sessionId);
         List<String> allowedToolNames = new ArrayList<>();

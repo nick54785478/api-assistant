@@ -46,6 +46,7 @@ public class ChatApplicationService {
     private final PlaybookRepositoryPort playbookRepositoryPort;
     private final SessionToolProviderPort sessionToolProviderPort;
     private final ChatStrategyRegistryPort strategyRegistry;
+    private final org.springframework.context.ApplicationContext applicationContext;
 
     /**
      * 建構子，初始化 ChatClient 與對話記憶體，並載入系統所有的 ToolCallbackProviders 與 ChatStrategies。
@@ -54,11 +55,12 @@ public class ChatApplicationService {
      * @param toolProviders     系統中所有註冊的工具提供者 (包含 MCP Tools 等)
      * @param strategyRegistry  負責提供 ChatStrategy 的 Registry
      */
-    public ChatApplicationService(ChatClient.Builder chatClientBuilder, List<ToolCallbackProvider> toolProviders, AgentSessionRepositoryPort agentSessionRepositoryPort, PlaybookRepositoryPort playbookRepositoryPort, SessionToolProviderPort sessionToolProviderPort, ChatStrategyRegistryPort strategyRegistry) {
+    public ChatApplicationService(ChatClient.Builder chatClientBuilder, List<ToolCallbackProvider> toolProviders, AgentSessionRepositoryPort agentSessionRepositoryPort, PlaybookRepositoryPort playbookRepositoryPort, SessionToolProviderPort sessionToolProviderPort, ChatStrategyRegistryPort strategyRegistry, org.springframework.context.ApplicationContext applicationContext) {
         this.agentSessionRepositoryPort = agentSessionRepositoryPort;
         this.playbookRepositoryPort = playbookRepositoryPort;
         this.sessionToolProviderPort = sessionToolProviderPort;
         this.strategyRegistry = strategyRegistry;
+        this.applicationContext = applicationContext;
 
         // Initialize chat memory store
         this.chatMemory = MessageWindowChatMemory.builder()
@@ -249,6 +251,32 @@ public class ChatApplicationService {
 
             if (retries >= MAX_TOOL_CALL_RETRIES) {
                 log.warn("Max retries ({}) reached. Still produced failed tool call for session {}", MAX_TOOL_CALL_RETRIES, sessionId);
+                try {
+                    String jsonContent = extractJson(result);
+                    if (jsonContent != null) {
+                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                        com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(jsonContent);
+                        if (node.has("name") && node.has("arguments")) {
+                            String toolName = node.get("name").asText();
+                            String arguments = node.get("arguments").toString();
+                            log.info("Manually executing tool {} with arguments {}", toolName, arguments);
+                            for (org.springframework.ai.tool.ToolCallback callback : activeCallbacks) {
+                                if (callback.getToolDefinition().name().equals(toolName)) {
+                                    String toolResult = callback.call(arguments);
+                                    log.info("Manual tool execution result: {}", toolResult);
+                                    var finalPrompt = chatClient.prompt()
+                                            .user("系統已替你執行工具。結果為：\n" + toolResult + "\n請根據結果簡短回覆使用者。")
+                                            .system(systemPromptText)
+                                            .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID, sessionId));
+                                    return finalPrompt.call().content();
+                                }
+                            }
+                            log.warn("Manual execution failed: Tool {} not found in active callbacks", toolName);
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.error("Failed to parse or execute manual tool call fallback", ex);
+                }
             }
         }
 
@@ -271,14 +299,17 @@ public class ChatApplicationService {
 
         java.util.List<org.springframework.ai.tool.ToolCallback> activeCallbacks = new java.util.ArrayList<>();
         if (selectedStrategy != null) {
-            activeCallbacks = selectedStrategy.getActiveTools(data.session(), data.playbook(), currentAllCallbacks, data.allowedToolNames());
+            java.util.List<org.springframework.ai.tool.ToolCallback> rawCallbacks = selectedStrategy.getActiveTools(data.session(), data.playbook(), currentAllCallbacks, data.allowedToolNames());
+            for (org.springframework.ai.tool.ToolCallback callback : rawCallbacks) {
+                activeCallbacks.add(new PrefixStrippingToolCallback(callback));
+            }
         }
 
         // 系統必備工具：必定允許 AI 呼叫 advancePlaybookStep
         for (org.springframework.ai.tool.ToolCallback callback : currentAllCallbacks) {
             if ("advancePlaybookStep".equals(callback.getToolDefinition().name())) {
                 if (activeCallbacks.stream().noneMatch(c -> c.getToolDefinition().name().equals("advancePlaybookStep"))) {
-                    activeCallbacks.add(callback);
+                    activeCallbacks.add(new PrefixStrippingToolCallback(callback));
                 }
                 break;
             }
@@ -426,4 +457,45 @@ public class ChatApplicationService {
         // Pattern 3: Starts with raw JSON that looks like a tool invocation
         return trimmed.startsWith("{") && trimmed.contains("\"name\"");
     }
+
+    private String extractJson(String text) {
+        if (text == null) return null;
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            return text.substring(start, end + 1);
+        }
+        return null;
+    }
+
+    /**
+     * 包裝 ToolCallback 以動態去除名稱中的 Session ID 前綴（如 s_0257_），
+     * 確保傳遞給 LLM 時，工具名稱是乾淨且原始的，避免模型對前綴產生困惑。
+     */
+    private static class PrefixStrippingToolCallback implements org.springframework.ai.tool.ToolCallback {
+        private final org.springframework.ai.tool.ToolCallback delegate;
+        private final org.springframework.ai.tool.definition.ToolDefinition newDefinition;
+
+        public PrefixStrippingToolCallback(org.springframework.ai.tool.ToolCallback delegate) {
+            this.delegate = delegate;
+            org.springframework.ai.tool.definition.ToolDefinition originalDef = delegate.getToolDefinition();
+            String strippedName = originalDef.name().replaceFirst("^s_[a-zA-Z0-9]{1,10}_", "");
+            this.newDefinition = org.springframework.ai.tool.definition.ToolDefinition.builder()
+                    .name(strippedName)
+                    .description(originalDef.description())
+                    .inputSchema(originalDef.inputSchema())
+                    .build();
+        }
+
+        @Override
+        public org.springframework.ai.tool.definition.ToolDefinition getToolDefinition() {
+            return newDefinition;
+        }
+
+        @Override
+        public String call(String toolInput) {
+            return delegate.call(toolInput);
+        }
+    }
+
 }

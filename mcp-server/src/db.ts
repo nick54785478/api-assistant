@@ -102,4 +102,26 @@ async function initDb(db: Database) {
     true
   ]);
   }
+
+  // 插入預設的 set_auth_token 工具
+  const setAuthExists = await db.get(`SELECT 1 FROM mcp_tools WHERE name = ? AND session_id IS NULL`, ['set_auth_token']);
+  if (!setAuthExists) {
+    await db.run(`
+      INSERT INTO mcp_tools (name, description, input_schema, api_url, api_method, requires_auth)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      'set_auth_token',
+      '將使用者提供的 Token 設定為全域授權 Token。若使用者在對話中提供了 Token，必須先呼叫此工具將 Token 寫入系統。絕對禁止解析或修改 Token 內容，必須原封不動傳遞。',
+      JSON.stringify({
+        type: "object",
+        properties: {
+          token: { type: "string", description: "使用者提供的原始字串 Token，絕對禁止任何修改或重新編碼，必須原樣傳遞" }
+        },
+        required: ["token"]
+      }),
+      'dummy_url',
+      'POST',
+      false
+    ]);
+  }
 }

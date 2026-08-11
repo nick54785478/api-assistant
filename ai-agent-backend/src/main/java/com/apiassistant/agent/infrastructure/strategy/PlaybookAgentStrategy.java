@@ -118,7 +118,7 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         } else {
             sb.append("   💡 **劇本操作提示**：\n   - 輸入 **OK** 或 **下一步**：繼續執行下一個步驟\n   - 輸入 **取消** 或 **退出**：終止當前劇本模式");
         }
-        sb.append("\n4. 用繁體中文自然語言回覆。");
+        sb.append("\n4. 用繁體中文自然語言回覆，**只能根據工具回傳的真實資料進行報告，絕對禁止自行編造、腦補任何未回傳的欄位（如員工姓名、編號等）**。");
         
         return sb.toString();
     }

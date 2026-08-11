@@ -59,6 +59,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
 
+  if (toolName === "set_auth_token") {
+    const token = String(request.params.arguments?.token || '');
+    if (token) {
+      currentAuthToken = token.replace(/^Bearer\s+/i, '');
+      return {
+        content: [{
+          type: "text",
+          text: `成功設定全域 Token！後續呼叫需要授權的 API 將會自動使用此 Token。`
+        }]
+      };
+    } else {
+      return {
+        content: [{
+          type: "text",
+          text: `設定 Token 失敗：未提供 Token 參數。`
+        }]
+      };
+    }
+  }
+
   let actualToolName = toolName;
   let toolDef;
   

@@ -35,10 +35,11 @@ public class GeneralAgentStrategy implements ChatStrategy {
 
     @Override
     public String getSystemPrompt(String defaultSystemPrompt, AgentSession session, Playbook playbook, List<String> allowedToolNames, String sessionId) {
+        String basePrompt = defaultSystemPrompt + "\n\n【嚴格約束】：\n若使用者在對話中提供了任何 Token（如 JWT）、金鑰或長字串，請絕對不要嘗試解析、修改或重新編碼該字串！你必須將使用者提供的字串「原封不動地（Raw String）」傳遞給工具的參數中，否則會導致驗證失敗。";
         if (playbook != null && session != null && session.getCurrentStepIndex() >= playbook.getSteps().size()) {
-            return defaultSystemPrompt + "\n\n【系統指示】：此測試劇本的所有步驟已全部執行完畢！\n若使用者無特別指示，請回覆：「🎉 所有測試步驟已執行完畢！劇本順利完成。」。\n若使用者有新的需求或要求呼叫特定 API，請恢復正常助手模式，根據其需求呼叫對應工具。";
+            return basePrompt + "\n\n【系統指示】：此測試劇本的所有步驟已全部執行完畢！\n若使用者無特別指示，請回覆：「🎉 所有測試步驟已執行完畢！劇本順利完成。」。\n若使用者有新的需求或要求呼叫特定 API，請恢復正常助手模式，根據其需求呼叫對應工具。";
         }
-        return defaultSystemPrompt;
+        return basePrompt;
     }
 
     @Override

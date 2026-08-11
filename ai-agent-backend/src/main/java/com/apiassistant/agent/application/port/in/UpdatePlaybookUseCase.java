@@ -6,9 +6,10 @@ import java.util.List;
 import com.apiassistant.agent.application.command.UpdatePlaybookCommand;
 
 /**
- * UseCase for updating an existing Playbook.
+ * Inbound Port (UseCase) for updating an existing Playbook.
+ * 負責更新現有的劇本 (Playbook) 內容。
  */
 public interface UpdatePlaybookUseCase {
 
-    PlaybookGottenResult updatePlaybook(UpdatePlaybookCommand command);
+    PlaybookGottenResult execute(UpdatePlaybookCommand command);
 }

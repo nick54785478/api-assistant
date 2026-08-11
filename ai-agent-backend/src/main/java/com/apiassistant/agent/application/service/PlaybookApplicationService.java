@@ -20,12 +20,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class PlaybookApplicationService implements CreatePlaybookUseCase, ListPlaybooksUseCase, GetPlaybookUseCase, UpdatePlaybookUseCase {
+class PlaybookApplicationService implements CreatePlaybookUseCase, ListPlaybooksUseCase, GetPlaybookUseCase, UpdatePlaybookUseCase {
 
     private final PlaybookRepositoryPort playbookRepositoryPort;
 
     @Override
-    public PlaybookGottenResult createPlaybook(CreatePlaybookCommand command) {
+    public PlaybookGottenResult execute(CreatePlaybookCommand command) {
         List<PlaybookStep> steps = command.steps().stream()
                 .map(step -> new PlaybookStep(
                         step.name(),
@@ -51,19 +51,19 @@ public class PlaybookApplicationService implements CreatePlaybookUseCase, ListPl
     }
 
     @Override
-    public Optional<PlaybookGottenResult> getPlaybook(String id) {
+    public Optional<PlaybookGottenResult> execute(String id) {
         return playbookRepositoryPort.findById(id).map(PlaybookDtoAssembler::toResult);
     }
 
     @Override
-    public List<PlaybookGottenResult> listPlaybooks() {
+    public List<PlaybookGottenResult> execute() {
         return playbookRepositoryPort.findAll().stream()
                 .map(PlaybookDtoAssembler::toResult)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public PlaybookGottenResult updatePlaybook(UpdatePlaybookCommand command) {
+    public PlaybookGottenResult execute(UpdatePlaybookCommand command) {
         Playbook playbook = playbookRepositoryPort.findById(command.id())
                 .orElseThrow(() -> new IllegalArgumentException("Playbook not found: " + command.id()));
         

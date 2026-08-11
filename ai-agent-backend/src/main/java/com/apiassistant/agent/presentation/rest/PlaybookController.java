@@ -35,14 +35,14 @@ public class PlaybookController {
     @Operation(summary = "Create a new playbook")
     public ResponseEntity<PlaybookResource> createPlaybook(@RequestBody CreatePlaybookResource request) {
         CreatePlaybookCommand command = PlaybookResourceAssembler.toCommand(request);
-        PlaybookGottenResult result = createPlaybookUseCase.createPlaybook(command);
+        PlaybookGottenResult result = createPlaybookUseCase.execute(command);
         return ResponseEntity.ok(PlaybookResourceAssembler.toResource(result));
     }
 
     @GetMapping
     @Operation(summary = "List all playbooks")
     public ResponseEntity<List<PlaybookResource>> listPlaybooks() {
-        List<PlaybookResource> resources = listPlaybooksUseCase.listPlaybooks().stream()
+        List<PlaybookResource> resources = listPlaybooksUseCase.execute().stream()
                 .map(PlaybookResourceAssembler::toResource)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(resources);
@@ -51,7 +51,7 @@ public class PlaybookController {
     @GetMapping("/{id}")
     @Operation(summary = "Get playbook by ID")
     public ResponseEntity<PlaybookResource> getPlaybook(@PathVariable String id) {
-        return getPlaybookUseCase.getPlaybook(id)
+        return getPlaybookUseCase.execute(id)
                 .map(PlaybookResourceAssembler::toResource)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -61,7 +61,7 @@ public class PlaybookController {
     @Operation(summary = "Update an existing playbook")
     public ResponseEntity<PlaybookResource> updatePlaybook(@PathVariable String id, @RequestBody com.apiassistant.agent.presentation.resource.in.UpdatePlaybookResource request) {
         UpdatePlaybookCommand command = PlaybookResourceAssembler.toCommand(id, request);
-        PlaybookGottenResult result = updatePlaybookUseCase.updatePlaybook(command);
+        PlaybookGottenResult result = updatePlaybookUseCase.execute(command);
         return ResponseEntity.ok(PlaybookResourceAssembler.toResource(result));
     }
 
@@ -71,7 +71,7 @@ public class PlaybookController {
             @PathVariable String id,
             @RequestParam(required = false) String targetAgentSessionId) {
         ClonePlaybookCommand command = new ClonePlaybookCommand(id, targetAgentSessionId);
-        PlaybookGottenResult result = clonePlaybookUseCase.clonePlaybook(command);
+        PlaybookGottenResult result = clonePlaybookUseCase.execute(command);
         return ResponseEntity.ok(PlaybookResourceAssembler.toResource(result));
     }
 }

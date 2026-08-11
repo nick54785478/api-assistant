@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ClonePlaybookService implements ClonePlaybookUseCase {
+class ClonePlaybookService implements ClonePlaybookUseCase {
 
     private final PlaybookRepositoryPort playbookRepository;
 
     @Override
     @Transactional
-    public PlaybookGottenResult clonePlaybook(ClonePlaybookCommand command) {
+    public PlaybookGottenResult execute(ClonePlaybookCommand command) {
         // Fetch source playbook
         Playbook sourcePlaybook = playbookRepository.findById(command.getPlaybookId())
                 .orElseThrow(() -> new IllegalArgumentException("Playbook not found: " + command.getPlaybookId()));

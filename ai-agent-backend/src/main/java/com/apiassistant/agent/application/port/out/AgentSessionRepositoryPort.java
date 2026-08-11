@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Outbound Port for persisting and retrieving AgentSessions.
- * Naming Rule: ... + Port (AgentSessionRepositoryPort)
+ * Outbound Port for persisting and retrieving Agent Sessions.
+ * 負責持久化與存取 Agent Session 的 Outbound Port。
+ * 
  * Strict Rule: Port methods MUST NOT accept or return technology-specific objects (like JPA entities).
  */
 public interface AgentSessionRepositoryPort {

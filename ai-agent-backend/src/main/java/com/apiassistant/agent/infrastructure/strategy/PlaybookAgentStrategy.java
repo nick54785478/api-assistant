@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 處理「劇本執行模式」的 Agent 策略。
@@ -19,6 +20,9 @@ import java.util.List;
 @Slf4j
 @Component
 public class PlaybookAgentStrategy implements ChatStrategy {
+
+    private static final Set<String> APPROVAL_KEYWORDS = Set.of("ok", "好", "繼續", "下一步", "next", "y", "yes", "proceed", "完成", "done");
+    private static final Set<String> CANCEL_KEYWORDS = Set.of("取消", "退出", "停止", "cancel", "abort", "quit", "exit");
 
     /**
      * 【策略路由條件】
@@ -32,12 +36,8 @@ public class PlaybookAgentStrategy implements ChatStrategy {
     @Override
     public PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook) {
         String lowerMsg = userMessage.trim().toLowerCase();
-        boolean isApproval = lowerMsg.equals("ok") || lowerMsg.equals("好") || lowerMsg.equals("繼續") || 
-                             lowerMsg.equals("下一步") || lowerMsg.equals("next") || lowerMsg.equals("y") || 
-                             lowerMsg.equals("yes") || lowerMsg.equals("proceed") || lowerMsg.equals("完成") || lowerMsg.equals("done");
-                             
-        boolean isCancel = lowerMsg.equals("取消") || lowerMsg.equals("退出") || lowerMsg.equals("停止") ||
-                           lowerMsg.equals("cancel") || lowerMsg.equals("abort") || lowerMsg.equals("quit") || lowerMsg.equals("exit");
+        boolean isApproval = APPROVAL_KEYWORDS.contains(lowerMsg);
+        boolean isCancel = CANCEL_KEYWORDS.contains(lowerMsg);
                              
         if (isCancel) {
             session.unbindPlaybook();
@@ -130,17 +130,13 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         if (allowedToolNames == null || allowedToolNames.isEmpty()) {
             return expectedName;
         }
-        for (String allowedName : allowedToolNames) {
-            if (allowedName.equals(expectedName)) {
-                return allowedName;
-            }
-        }
-        for (String allowedName : allowedToolNames) {
-            if (allowedName.endsWith("_" + expectedName)) {
-                return allowedName;
-            }
-        }
-        return expectedName;
+        return allowedToolNames.stream()
+                .filter(name -> name.equals(expectedName))
+                .findFirst()
+                .orElseGet(() -> allowedToolNames.stream()
+                        .filter(name -> name.endsWith("_" + expectedName))
+                        .findFirst()
+                        .orElse(expectedName));
     }
 
     @Override
@@ -163,24 +159,13 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         if (currentStep.getRequiredTool() != null && !currentStep.getRequiredTool().isBlank()) {
             String requiredName = currentStep.getRequiredTool();
             // First, find the exact allowed name for this session
-            String targetAllowedName = requiredName;
-            if (allowedToolNames != null) {
-                for (String allowedName : allowedToolNames) {
-                    if (allowedName.equals(requiredName) || allowedName.endsWith("_" + requiredName)) {
-                        targetAllowedName = allowedName;
-                        break;
-                    }
-                }
-            }
+            String targetAllowedName = resolveToolName(requiredName, allowedToolNames);
             
             // Then find the callback that matches this exact target name
-            for (ToolCallback callback : allTools) {
-                String cbName = callback.getToolDefinition().name();
-                if (cbName.equals(targetAllowedName)) {
-                    activeCallbacks.add(callback);
-                    break; // Force strictly one tool
-                }
-            }
+            allTools.stream()
+                    .filter(callback -> callback.getToolDefinition().name().equals(targetAllowedName))
+                    .findFirst()
+                    .ifPresent(activeCallbacks::add);
         } else {
             // Fallback if no specific tool is required
             activeCallbacks.addAll(getGeneralActiveTools(allTools, allowedToolNames));

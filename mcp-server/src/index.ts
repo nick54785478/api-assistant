@@ -119,17 +119,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (toolDef.requires_auth) {
     let tokenToUse = currentAuthToken;
     
-    // 允許透過 LLM 傳入的參數來覆寫全域 Token
-    const providedToken = args.token || args.jwtoken || args.jwt || args.authorization;
-    if (providedToken) {
-      tokenToUse = String(providedToken);
-      if (tokenToUse.toLowerCase().startsWith('bearer ')) {
-        tokenToUse = tokenToUse.substring(7);
+    // 僅允許劇本 API 助手（有 session_id）透過 LLM 傳入參數覆寫 Token
+    // 一般 API 助手強制使用全域 Token，避免 LLM 在傳遞時竄改或截斷
+    if (toolDef.session_id) {
+      const providedToken = args.token || args.jwtoken || args.jwt || args.authorization;
+      if (providedToken) {
+        tokenToUse = String(providedToken);
+        if (tokenToUse.toLowerCase().startsWith('bearer ')) {
+          tokenToUse = tokenToUse.substring(7);
+        }
       }
     }
 
     if (!tokenToUse) {
-      throw new Error(`執行 ${toolName} 失敗：尚未登入，系統中沒有暫存的 Token，且未手動提供 Token。請先呼叫 login 工具或提供 Token。`);
+      throw new Error(`執行 ${toolName} 失敗：尚未登入，系統中沒有暫存的 Token。請先呼叫 login 工具。`);
     }
     (fetchOptions.headers as any)['Authorization'] = `Bearer ${tokenToUse}`;
   }

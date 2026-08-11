@@ -49,7 +49,9 @@ export class McpToolManagerComponent implements OnInit {
   typeOptions = [
     { label: '字串 (String)', value: 'string' },
     { label: '數字 (Number)', value: 'number' },
-    { label: '布林 (Boolean)', value: 'boolean' }
+    { label: '布林 (Boolean)', value: 'boolean' },
+    { label: '陣列 (Array)', value: 'array' },
+    { label: '物件 (Object)', value: 'object' }
   ];
 
   constructor(

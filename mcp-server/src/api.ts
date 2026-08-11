@@ -61,6 +61,9 @@ function parametersToSchema(parameters: any[]): string {
       type: p.type || "string",
       description: p.description || ""
     };
+    if (p.type === 'array') {
+      properties[p.name].items = {}; // Allow any type of items in the array
+    }
     if (p.required) {
       required.push(p.name);
     }

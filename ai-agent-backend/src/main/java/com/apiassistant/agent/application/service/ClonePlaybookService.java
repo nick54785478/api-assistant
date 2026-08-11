@@ -56,20 +56,32 @@ class ClonePlaybookService implements ClonePlaybookUseCase {
                 newPlaybook.getName(),
                 newPlaybook.getDescription(),
                 newPlaybook.getSteps().stream()
-                        .map(s -> new PlaybookGottenResult.PlaybookStepResult(
-                                s.getName(),
-                                s.getDescription(),
-                                s.getRequiredTool(),
-                                s.getResponseInstructions(),
-                                s.getCustomInputs() != null ? s.getCustomInputs().stream().map(p -> new PlaybookGottenResult.StepParameterResult(
-                                        p.getType() != null ? p.getType().name() : null,
-                                        p.getKey(),
-                                        p.getValue()
-                                )).collect(Collectors.toList()) : null
-                        ))
+                        .map(this::mapToStepResult)
                         .collect(Collectors.toList()),
                 newPlaybook.getCreatedAt(),
                 newPlaybook.getUpdatedAt()
+        );
+    }
+
+    private PlaybookGottenResult.PlaybookStepResult mapToStepResult(PlaybookStep s) {
+        List<PlaybookGottenResult.StepParameterResult> customInputs = null;
+        if (s.getCustomInputs() != null) {
+            customInputs = s.getCustomInputs().stream().map(p -> {
+                String typeName = p.getType() != null ? p.getType().name() : null;
+                return new PlaybookGottenResult.StepParameterResult(
+                        typeName,
+                        p.getKey(),
+                        p.getValue()
+                );
+            }).collect(Collectors.toList());
+        }
+        
+        return new PlaybookGottenResult.PlaybookStepResult(
+                s.getName(),
+                s.getDescription(),
+                s.getRequiredTool(),
+                s.getResponseInstructions(),
+                customInputs
         );
     }
 }

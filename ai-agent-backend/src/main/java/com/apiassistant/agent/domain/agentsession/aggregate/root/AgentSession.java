@@ -3,7 +3,6 @@ package com.apiassistant.agent.domain.agentsession.aggregate.root;
 import com.apiassistant.agent.domain.agentsession.aggregate.vo.AgentStatus;
 import com.apiassistant.agent.domain.agentsession.aggregate.vo.SessionId;
 import com.apiassistant.agent.domain.agentsession.event.AgentSessionCreatedEvent;
-import lombok.Getter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.List;
  * Aggregate Root representing a chat session with the AI Assistant.
  * Pure Java, no framework dependencies.
  */
-@Getter
 public class AgentSession {
     /**
      * 唯一識別碼
@@ -191,5 +189,37 @@ public class AgentSession {
         List<Object> events = new ArrayList<>(this.domainEvents);
         this.domainEvents.clear();
         return Collections.unmodifiableList(events);
+    }
+
+    public SessionId getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public AgentStatus getStatus() {
+        return status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getPlaybookId() {
+        return playbookId;
+    }
+
+    public int getCurrentStepIndex() {
+        return currentStepIndex;
+    }
+
+    public List<Object> getDomainEvents() {
+        return domainEvents;
     }
 }

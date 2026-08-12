@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { PlaybookService } from '../services/playbook.service';
 import { AgentSessionService } from '../../../core/services/agent-session.service';
+import { AgentSession } from '../../../core/models/agent-session.model';
 import { StorageService } from '../../../core/services/storage.service';
 import { McpToolService } from '../../../core/services/mcp-tool.service';
 import { MessageService } from 'primeng/api';

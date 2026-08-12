@@ -8,8 +8,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { SidebarModule } from 'primeng/sidebar';
 import { TimelineModule } from 'primeng/timeline';
 import { MarkdownModule } from 'ngx-markdown';
-import { ChatMessage } from '../../../../core/services/chat-websocket.service';
-import { PlaybookExecutionLog } from '../../../../core/services/agent-session.service';
+import { ChatMessage } from '../../../../core/models/chat-message.model';
+import { PlaybookExecutionLog } from '../../../../core/models/agent-session.model';
 
 @Component({
   selector: 'app-chat-area',

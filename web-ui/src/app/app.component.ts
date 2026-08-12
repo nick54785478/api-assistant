@@ -15,10 +15,12 @@ import { SidebarModule } from 'primeng/sidebar';
 import { InputTextModule } from 'primeng/inputtext';
 
 // Services
-import { ChatWebsocketService, ChatMessage } from './core/services/chat-websocket.service';
+import { ChatWebsocketService } from './core/services/chat-websocket.service';
+import { ChatMessage } from './core/models/chat-message.model';
 import { StorageService } from './core/services/storage.service';
 import { LoadingService } from './core/services/loading.service';
-import { AgentSessionService, PlaybookExecutionLog } from './core/services/agent-session.service';
+import { AgentSessionService } from './core/services/agent-session.service';
+import { PlaybookExecutionLog } from './core/models/agent-session.model';
 
 // Components
 import { SidebarComponent } from './layout/sidebar/sidebar.component';

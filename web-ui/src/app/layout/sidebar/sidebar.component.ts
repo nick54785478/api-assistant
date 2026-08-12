@@ -1,7 +1,8 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AvatarModule } from 'primeng/avatar';
-import { AgentSessionService, AgentSession } from '../../core/services/agent-session.service';
+import { AgentSessionService } from '../../core/services/agent-session.service';
+import { AgentSession } from '../../core/models/agent-session.model';
 import { StorageService } from '../../core/services/storage.service';
 import { FormsModule } from '@angular/forms';
 import { MessageService, MenuItem } from 'primeng/api';

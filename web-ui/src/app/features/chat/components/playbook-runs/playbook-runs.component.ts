@@ -5,7 +5,8 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TimelineModule } from 'primeng/timeline';
 import { CardModule } from 'primeng/card';
-import { AgentSessionService, PlaybookRun } from '../../../../core/services/agent-session.service';
+import { AgentSessionService } from '../../../../core/services/agent-session.service';
+import { PlaybookRun } from '../../../../core/models/agent-session.model';
 import { MarkdownModule } from 'ngx-markdown';
 
 @Component({

@@ -3,14 +3,7 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ReplaySubject, Observable, BehaviorSubject } from 'rxjs';
 import { StorageService } from './storage.service';
 
-export interface ChatMessage {
-  role: 'user' | 'ai';
-  content: string;
-  isDelta?: boolean;
-  isFinal?: boolean;
-  agentMode?: string;
-}
-
+import { ChatMessage } from '../models/chat-message.model';
 @Injectable({
   providedIn: 'root'
 })

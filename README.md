@@ -59,6 +59,7 @@ npm run start
 ## 核心功能特色
 
 - **Playbook 劇本執行**：將標準作業流程 (SOP) 轉換為 AI 可執行的步驟 (Steps)，並要求 AI 在特定步驟必定呼叫指定工具。
+- **劇本快轉 (Fast Forward) 模式**：在劇本執行過程中提供一鍵快轉功能，系統會自動在每個步驟結束後確認並接續下一步，大幅減少手動介入與等待時間。
 - **動態工具載入 (Dynamic Tools)**：每個 Session 可以獨立綁定不同的 MCP Tools，避免工具濫用，強化安全性。Session-scoped 工具使用精簡前綴命名（`s_{4chars}_toolName`），降低模型混淆。
 - **打字機串流回覆**：採用 WebSocket + Spring Reactive (`Flux`) 實現字元級別的即時串流回傳，提升使用者體驗。
 - **高效能快取與並發機制**：利用 Caffeine Cache (TTL 30 秒自動過期) 與非同步並發查詢，大幅縮短 AI 生成前的資料準備時間，並確保新註冊的工具能被即時載入。

@@ -37,4 +37,7 @@ public class AgentSessionJpaEntity {
     
     @jakarta.persistence.Column(columnDefinition = "integer default 0 not null")
     private int currentStepIndex;
+    
+    @jakarta.persistence.Column(name = "current_run_id")
+    private String currentRunId;
 }

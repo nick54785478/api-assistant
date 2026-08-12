@@ -10,6 +10,10 @@ import com.apiassistant.agent.presentation.assembler.AgentSessionResourceAssembl
 import com.apiassistant.agent.presentation.resource.in.CreateAgentSessionResource;
 import com.apiassistant.agent.presentation.resource.in.RenameAgentSessionResource;
 import com.apiassistant.agent.presentation.resource.out.AgentSessionCreatedResource;
+import com.apiassistant.agent.presentation.resource.out.PlaybookExecutionLogSearchedResource;
+import com.apiassistant.agent.application.port.in.SearchPlaybookExecutionLogsUseCase;
+import com.apiassistant.agent.application.port.in.SearchPlaybookRunsUseCase;
+import com.apiassistant.agent.presentation.assembler.PlaybookExecutionLogResourceAssembler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +41,8 @@ public class AgentSessionController {
     private final ListAgentSessionsUseCase listAgentSessionsUseCase;
     private final RenameAgentSessionUseCase renameAgentSessionUseCase;
     private final com.apiassistant.agent.application.service.ChatApplicationService chatApplicationService;
+    private final SearchPlaybookExecutionLogsUseCase searchPlaybookExecutionLogsUseCase;
+    private final SearchPlaybookRunsUseCase searchPlaybookRunsUseCase;
 
     @Operation(summary = "建立新會話", description = "建立一個全新的 AI 助手會話，並可選填初始訊息。")
     @ApiResponses(value = {
@@ -84,6 +90,31 @@ public class AgentSessionController {
                         msg.getText()
                 ))
                 .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "獲取劇本執行紀錄", description = "獲取指定會話的劇本各步驟執行狀態與錯誤紀錄。")
+    @GetMapping("/{id}/playbook-logs")
+    public ResponseEntity<List<PlaybookExecutionLogSearchedResource>> getPlaybookLogs(
+            @Parameter(description = "會話 ID", required = true) @PathVariable String id) {
+        
+        List<PlaybookExecutionLogSearchedResource> response = searchPlaybookExecutionLogsUseCase.execute(id)
+                .stream()
+                .map(PlaybookExecutionLogResourceAssembler::toResource)
+                .collect(Collectors.toList());
+                
+        return ResponseEntity.ok(response);
+    }
+    
+    @Operation(summary = "獲取分頁劇本執行批次", description = "獲取指定會話的劇本各次執行批次 (分頁)。")
+    @GetMapping("/{id}/playbook-runs")
+    public ResponseEntity<org.springframework.data.domain.Page<com.apiassistant.agent.application.dto.PlaybookRunSearchedResult>> getPlaybookRuns(
+            @Parameter(description = "會話 ID", required = true) @PathVariable String id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        org.springframework.data.domain.Page<com.apiassistant.agent.application.dto.PlaybookRunSearchedResult> response = searchPlaybookRunsUseCase.execute(id, page, size);
+                
         return ResponseEntity.ok(response);
     }
 }

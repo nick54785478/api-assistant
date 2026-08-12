@@ -1,12 +1,14 @@
 <div class="h-screen flex overflow-hidden" style="background-color: var(--p-surface-ground);">
   <app-sidebar [name]="name" [username]="username" (openSessionSettings)="openSessionSettings($event)"
-    (openNewChat)="openNewChatDialog()" (openManagePlaybooks)="openManagePlaybooks($event)">
+    (openNewChat)="openNewChatDialog()" (openManagePlaybooks)="openManagePlaybooks($event)"
+    (openPlaybookRuns)="openPlaybookRunsDialog($event)">
   </app-sidebar>
 
   <!-- Chat Area -->
   <app-chat-area *ngIf="isChatRoute" class="flex-1 flex overflow-hidden" [messages]="messages"
-    [isWaitingForResponse]="isWaitingForResponse" [(userInput)]="userInput" [agentMode]="agentMode" (onSendMessage)="sendMessage()"
-    (openSettings)="openGlobalSettings()">
+    [isWaitingForResponse]="isWaitingForResponse" [(userInput)]="userInput" [agentMode]="agentMode" 
+    [isFastForwarding]="isFastForwarding" [playbookLogRuns]="playbookLogRuns" (toggleFastForward)="toggleFastForward()"
+    (onSendMessage)="sendMessage()" (openSettings)="openGlobalSettings()">
   </app-chat-area>
 
   <div *ngIf="!isChatRoute" class="flex-1 overflow-auto bg-gray-50 h-full">
@@ -73,5 +75,14 @@
         (onCanceled)="onPlaybookCanceled()">
       </app-playbook-create>
     </div>
+  </div>
+</p-dialog>
+
+<!-- Playbook Runs Dialog -->
+<p-dialog header="劇本執行紀錄" [(visible)]="showPlaybookRunsDialog" [modal]="true" [maximizable]="true"
+          [style]="{ width: '80vw', height: '80vh' }" [contentStyle]="{ padding: '0' }"
+          [baseZIndex]="10000">
+  <div class="h-full overflow-hidden bg-gray-50">
+    <app-playbook-runs [agentSessionId]="selectedPlaybookSessionId" *ngIf="showPlaybookRunsDialog"></app-playbook-runs>
   </div>
 </p-dialog>

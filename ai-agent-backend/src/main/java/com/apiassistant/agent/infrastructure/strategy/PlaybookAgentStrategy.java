@@ -34,7 +34,7 @@ public class PlaybookAgentStrategy implements ChatStrategy {
     }
 
     @Override
-    public PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook) {
+    public PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook, String lastAiMessage) {
         String lowerMsg = userMessage.trim().toLowerCase();
         boolean isApproval = APPROVAL_KEYWORDS.contains(lowerMsg);
         boolean isCancel = CANCEL_KEYWORDS.contains(lowerMsg);
@@ -46,7 +46,7 @@ public class PlaybookAgentStrategy implements ChatStrategy {
         }
                              
         if (isApproval) {
-            session.advanceStep();
+            session.advanceStep(lastAiMessage);
             log.info("Advanced session {} to step {}", sessionId, session.getCurrentStepIndex());
             return PreProcessResult.SAVE_AND_CLEAR; // 清除歷史記憶，避免 Ollama 多輪 ToolCall 崩潰，上下文由 service 提取後手動注入
         }

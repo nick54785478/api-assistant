@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Aggregate Root representing a chat session with the AI Assistant.
@@ -49,10 +50,15 @@ public class AgentSession {
      */
     private int currentStepIndex;
 
+    /**
+     * 當前執行批次 ID
+     */
+    private String currentRunId;
+
     // Internal list to track domain events raised by this aggregate
     private final List<Object> domainEvents = new ArrayList<>();
 
-    private AgentSession(SessionId id, String name, String username, AgentStatus status, Instant createdAt, String playbookId, int currentStepIndex) {
+    private AgentSession(SessionId id, String name, String username, AgentStatus status, Instant createdAt, String playbookId, int currentStepIndex, String currentRunId) {
         this.id = id;
         this.name = name;
         this.username = username;
@@ -60,6 +66,7 @@ public class AgentSession {
         this.createdAt = createdAt;
         this.playbookId = playbookId;
         this.currentStepIndex = currentStepIndex;
+        this.currentRunId = currentRunId;
     }
 
     /**
@@ -80,7 +87,7 @@ public class AgentSession {
             sessionName = sessionName.substring(0, 20) + "...";
         }
         
-        AgentSession session = new AgentSession(newId, sessionName, username, AgentStatus.ACTIVE, Instant.now(), null, 0);
+        AgentSession session = new AgentSession(newId, sessionName, username, AgentStatus.ACTIVE, Instant.now(), null, 0, null);
         
         // Publish creation event
         session.domainEvents.add(new AgentSessionCreatedEvent(newId, username, initialMessage));
@@ -99,10 +106,11 @@ public class AgentSession {
      * @param createdAt        建立時間
      * @param playbookId       綁定的劇本 ID
      * @param currentStepIndex 當前執行到的劇本步驟索引
+     * @param currentRunId     當前執行批次 ID
      * @return 還原後的 AgentSession 實體
      */
-    public static AgentSession restore(SessionId id, String name, String username, AgentStatus status, Instant createdAt, String playbookId, int currentStepIndex) {
-        return new AgentSession(id, name, username, status, createdAt, playbookId, currentStepIndex);
+    public static AgentSession restore(SessionId id, String name, String username, AgentStatus status, Instant createdAt, String playbookId, int currentStepIndex, String currentRunId) {
+        return new AgentSession(id, name, username, status, createdAt, playbookId, currentStepIndex, currentRunId);
     }
 
     /**
@@ -146,6 +154,7 @@ public class AgentSession {
         }
         this.playbookId = playbookId;
         this.currentStepIndex = 0; // 重置步驟
+        this.currentRunId = UUID.randomUUID().toString(); // 產生新的執行批次 ID
     }
 
     /**
@@ -159,6 +168,7 @@ public class AgentSession {
         }
         this.playbookId = null;
         this.currentStepIndex = 0;
+        this.currentRunId = null;
     }
 
     /**
@@ -169,10 +179,24 @@ public class AgentSession {
     }
 
     /**
-     * 推進劇本的步驟。
+     * 推進劇本的步驟，並發布成功事件。
      */
-    public void advanceStep() {
+    public void advanceStep(String aiMessage) {
+        if (this.playbookId != null) {
+            this.domainEvents.add(new com.apiassistant.agent.domain.agentsession.event.PlaybookStepExecutedEvent(
+                    this.id.getValue(), this.playbookId, this.currentRunId, this.currentStepIndex, "SUCCESS", null, aiMessage, Instant.now()));
+        }
         this.currentStepIndex++;
+    }
+
+    /**
+     * 記錄步驟執行失敗，但不前進。
+     */
+    public void recordStepFailure(String errorMessage) {
+        if (this.playbookId != null) {
+            this.domainEvents.add(new com.apiassistant.agent.domain.agentsession.event.PlaybookStepExecutedEvent(
+                    this.id.getValue(), this.playbookId, this.currentRunId, this.currentStepIndex, "FAILED", errorMessage, null, Instant.now()));
+        }
     }
 
     /**
@@ -217,6 +241,10 @@ public class AgentSession {
 
     public int getCurrentStepIndex() {
         return currentStepIndex;
+    }
+
+    public String getCurrentRunId() {
+        return currentRunId;
     }
 
     public List<Object> getDomainEvents() {

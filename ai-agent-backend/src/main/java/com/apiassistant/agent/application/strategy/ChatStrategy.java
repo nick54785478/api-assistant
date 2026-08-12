@@ -36,7 +36,7 @@ public interface ChatStrategy {
      * 
      * @return 處理結果，決定是否需要儲存 Session 或清除歷史紀錄
      */
-    PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook);
+    PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook, String lastAiMessage);
     
     /** 
      * 取得專屬的系統提示詞 (System Prompt) 

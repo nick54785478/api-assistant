@@ -111,7 +111,19 @@ public class ChatApplicationService {
             ChatStrategy selectedStrategy = selectStrategy(data.session(), data.playbook());
 
             if (selectedStrategy != null && data.session() != null) {
-                ChatStrategy.PreProcessResult result = selectedStrategy.preProcess(sessionId, userMessage, data.session(), data.playbook());
+                // Get the last AI message from chat history
+                List<org.springframework.ai.chat.messages.Message> history = chatMemory.get(sessionId);
+                String lastAiMessage = null;
+                if (history != null && !history.isEmpty()) {
+                    for (int i = history.size() - 1; i >= 0; i--) {
+                        if (history.get(i) instanceof org.springframework.ai.chat.messages.AssistantMessage) {
+                            lastAiMessage = history.get(i).getText();
+                            break;
+                        }
+                    }
+                }
+                
+                ChatStrategy.PreProcessResult result = selectedStrategy.preProcess(sessionId, userMessage, data.session(), data.playbook(), lastAiMessage);
 
                 userMessage = handlePreProcessResult(sessionId, userMessage, result, data.session());
             }
@@ -136,6 +148,13 @@ public class ChatApplicationService {
             return retryFailedToolCallIfNeeded(result, sessionId, activeCallbacks, systemPromptText);
         } catch (Exception e) {
             log.error("Error during chat prompt", e);
+            try {
+                AgentSession session = agentSessionRepositoryPort.findById(SessionId.of(sessionId)).orElse(null);
+                if (session != null && session.getPlaybookId() != null) {
+                    session.recordStepFailure(e.getMessage());
+                    agentSessionRepositoryPort.save(session);
+                }
+            } catch (Exception ignore) {}
             return "很抱歉，AI 系統發生錯誤：" + e.getMessage();
         }
     }
@@ -159,7 +178,19 @@ public class ChatApplicationService {
             ChatStrategy selectedStrategy = selectStrategy(data.session(), data.playbook());
 
             if (selectedStrategy != null && data.session() != null) {
-                ChatStrategy.PreProcessResult result = selectedStrategy.preProcess(sessionId, userMessage, data.session(), data.playbook());
+                // Get the last AI message from chat history
+                List<org.springframework.ai.chat.messages.Message> history = chatMemory.get(sessionId);
+                String lastAiMessage = null;
+                if (history != null && !history.isEmpty()) {
+                    for (int i = history.size() - 1; i >= 0; i--) {
+                        if (history.get(i) instanceof org.springframework.ai.chat.messages.AssistantMessage) {
+                            lastAiMessage = history.get(i).getText();
+                            break;
+                        }
+                    }
+                }
+                
+                ChatStrategy.PreProcessResult result = selectedStrategy.preProcess(sessionId, userMessage, data.session(), data.playbook(), lastAiMessage);
 
                 userMessage = handlePreProcessResult(sessionId, userMessage, result, data.session());
             }
@@ -188,6 +219,10 @@ public class ChatApplicationService {
                     String result = prompt.call().content();
                     if (result == null || result.isBlank()) {
                         log.warn("AI returned empty response for session {} with tools active", sessionId);
+                        if (data.session() != null && data.session().getPlaybookId() != null) {
+                            data.session().recordStepFailure("AI returned empty response");
+                            agentSessionRepositoryPort.save(data.session());
+                        }
                         return reactor.core.publisher.Flux.just("工具已呼叫完成，但 AI 未回傳摘要訊息。請輸入「繼續」來進行下一步。");
                     }
 
@@ -195,6 +230,10 @@ public class ChatApplicationService {
                     return reactor.core.publisher.Flux.just(result);
                 } catch (Exception toolCallError) {
                     log.error("Error during tool-calling chat for session {}", sessionId, toolCallError);
+                    if (data.session() != null && data.session().getPlaybookId() != null) {
+                        data.session().recordStepFailure(toolCallError.getMessage());
+                        agentSessionRepositoryPort.save(data.session());
+                    }
                     return reactor.core.publisher.Flux.just("工具呼叫失敗：" + toolCallError.getMessage());
                 }
             }

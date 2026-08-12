@@ -28,7 +28,7 @@ public class GeneralAgentStrategy implements ChatStrategy {
     }
 
     @Override
-    public PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook) {
+    public PreProcessResult preProcess(String sessionId, String userMessage, AgentSession session, Playbook playbook, String lastAiMessage) {
         // 一般模式下不需要攔截進度
         return PreProcessResult.NONE;
     }

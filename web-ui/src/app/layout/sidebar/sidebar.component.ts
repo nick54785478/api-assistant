@@ -22,6 +22,7 @@ export class SidebarComponent implements OnInit {
   @Output() openSessionSettings = new EventEmitter<string>();
   @Output() openNewChat = new EventEmitter<void>();
   @Output() openManagePlaybooks = new EventEmitter<string>();
+  @Output() openPlaybookRuns = new EventEmitter<string>();
 
   sessions: AgentSession[] = [];
   activeSessionId: string | null = null;
@@ -72,6 +73,13 @@ export class SidebarComponent implements OnInit {
         icon: 'pi pi-book',
         command: () => {
           this.openManagePlaybooks.emit(session.sessionId);
+        }
+      },
+      {
+        label: '劇本執行紀錄',
+        icon: 'pi pi-history',
+        command: () => {
+          this.openPlaybookRuns.emit(session.sessionId);
         }
       }
     ];

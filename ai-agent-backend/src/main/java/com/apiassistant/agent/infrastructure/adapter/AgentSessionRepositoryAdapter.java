@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.annotation.Cacheable;
 
 /**
@@ -23,6 +24,7 @@ import org.springframework.cache.annotation.Cacheable;
 class AgentSessionRepositoryAdapter implements AgentSessionRepositoryPort {
 
     private final AgentSessionJpaRepository jpaRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void save(AgentSession session) {
@@ -33,11 +35,14 @@ class AgentSessionRepositoryAdapter implements AgentSessionRepositoryPort {
                 session.getStatus().name(),
                 session.getCreatedAt(),
                 session.getPlaybookId(),
-                session.getCurrentStepIndex()
+                session.getCurrentStepIndex(),
+                session.getCurrentRunId()
         );
         jpaRepository.save(entity);
         
-        // Note: Domain events from session.pullDomainEvents() should be published here 
+        for (Object event : session.pullDomainEvents()) {
+            eventPublisher.publishEvent(event);
+        }
     }
 
     @Override
@@ -62,7 +67,8 @@ class AgentSessionRepositoryAdapter implements AgentSessionRepositoryPort {
                 AgentStatus.valueOf(entity.getStatus()),
                 entity.getCreatedAt(),
                 entity.getPlaybookId(),
-                entity.getCurrentStepIndex()
+                entity.getCurrentStepIndex(),
+                entity.getCurrentRunId()
         );
     }
 }

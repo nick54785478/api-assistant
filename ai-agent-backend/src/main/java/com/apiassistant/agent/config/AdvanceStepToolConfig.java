@@ -22,7 +22,7 @@ public class AdvanceStepToolConfig {
             log.info("Tool 'advance_playbook_step' called for session: {}", request.sessionId());
             try {
                 agentSessionRepositoryPort.findById(SessionId.of(request.sessionId())).ifPresent(session -> {
-                    session.advanceStep();
+                    session.advanceStep("AI 透過工具主動推進");
                     agentSessionRepositoryPort.save(session);
                     log.info("Session {} advanced to step index {}", request.sessionId(), session.getCurrentStepIndex());
                 });

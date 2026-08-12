@@ -18,7 +18,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ChatWebsocketService, ChatMessage } from './core/services/chat-websocket.service';
 import { StorageService } from './core/services/storage.service';
 import { LoadingService } from './core/services/loading.service';
-import { AgentSessionService } from './core/services/agent-session.service';
+import { AgentSessionService, PlaybookExecutionLog } from './core/services/agent-session.service';
 
 // Components
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
@@ -26,6 +26,8 @@ import { ChatAreaComponent } from './features/chat/components/chat-area/chat-are
 import { McpToolManagerComponent } from './features/mcp-tools/components/mcp-tool-manager/mcp-tool-manager.component';
 import { PlaybookListComponent } from './features/playbooks/playbook-list/playbook-list.component';
 import { PlaybookCreateComponent } from './features/playbooks/playbook-create/playbook-create.component';
+
+import { PlaybookRunsComponent } from './features/chat/components/playbook-runs/playbook-runs.component';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +39,7 @@ import { PlaybookCreateComponent } from './features/playbooks/playbook-create/pl
     ChatAreaComponent,
     McpToolManagerComponent,
     PlaybookListComponent,
+    PlaybookRunsComponent,
     PlaybookCreateComponent,
     ProgressSpinnerModule,
     ToastModule,
@@ -62,6 +65,8 @@ export class AppComponent implements OnInit, OnDestroy {
   mcpSessionId: string = '';
   
   agentMode: string = 'GENERAL';
+  isFastForwarding = false;
+  playbookLogRuns: PlaybookExecutionLog[][] = [];
   
   messages: ChatMessage[] = [];
   private subscription!: Subscription;
@@ -77,6 +82,7 @@ export class AppComponent implements OnInit, OnDestroy {
   // Playbooks state
   showPlaybooksDialog = false;
   playbookViewMode: 'list' | 'create' | 'edit' = 'list';
+  showPlaybookRunsDialog = false;
   selectedPlaybookSessionId: string | undefined;
   editPlaybookId: string | undefined;
   
@@ -150,6 +156,11 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  openPlaybookRunsDialog(sessionId: string) {
+    this.selectedPlaybookSessionId = sessionId;
+    this.showPlaybookRunsDialog = true;
+  }
+
   onPlaybookSaved() {
     setTimeout(() => {
       this.playbookViewMode = 'list';
@@ -160,6 +171,31 @@ export class AppComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.playbookViewMode = 'list';
     });
+  }
+  
+  fetchPlaybookLogs() {
+    const sessionId = this.storageService.getItem('agentSessionId');
+    if (sessionId && this.agentMode === 'PLAYBOOK') {
+      this.agentSessionService.getPlaybookLogs(sessionId).subscribe({
+        next: (logs) => {
+          const runs: PlaybookExecutionLog[][] = [];
+          let currentRun: PlaybookExecutionLog[] = [];
+          for (const log of logs) {
+            if (log.stepIndex === 0 && currentRun.length > 0) {
+              runs.push([...currentRun]);
+              currentRun = [];
+            }
+            currentRun.push(log);
+          }
+          if (currentRun.length > 0) {
+            runs.push(currentRun);
+          }
+          // Limit to the last 10 runs to prevent UI performance issues
+          this.playbookLogRuns = runs.slice(-10);
+        },
+        error: (err) => console.error('Failed to load playbook logs', err)
+      });
+    }
   }
 
   ngOnInit() {
@@ -198,6 +234,19 @@ export class AppComponent implements OnInit, OnDestroy {
         } else if (msg.content) {
           this.messages.push(msg);
         }
+
+        // Handle auto-continue for fast forwarding
+        if (this.isFastForwarding && this.agentMode === 'PLAYBOOK') {
+          setTimeout(() => {
+            if (this.isFastForwarding && !this.isWaitingForResponse && this.agentMode === 'PLAYBOOK') {
+              this.autoContinue();
+            }
+          }, 1000); // 1s delay for better UX and readability
+        }
+        
+        if (this.agentMode === 'PLAYBOOK') {
+          this.fetchPlaybookLogs();
+        }
       } else {
         this.messages.push(msg);
       }
@@ -206,6 +255,11 @@ export class AppComponent implements OnInit, OnDestroy {
     // Subscribe to agent mode changes
     this.agentModeSubscription = this.chatWsService.agentMode$.subscribe(mode => {
       this.agentMode = mode;
+      if (mode !== 'PLAYBOOK') {
+        this.isFastForwarding = false;
+      } else {
+        this.fetchPlaybookLogs();
+      }
     });
   }
 
@@ -221,6 +275,18 @@ export class AppComponent implements OnInit, OnDestroy {
     
     // 3. Clear input
     this.userInput = '';
+  }
+
+  toggleFastForward() {
+    this.isFastForwarding = !this.isFastForwarding;
+    if (this.isFastForwarding && !this.isWaitingForResponse && this.agentMode === 'PLAYBOOK') {
+      this.autoContinue();
+    }
+  }
+
+  autoContinue() {
+    this.userInput = '繼續';
+    this.sendMessage();
   }
   
   openNewChatDialog() {

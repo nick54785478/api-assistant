@@ -9,6 +9,35 @@ export interface AgentSession {
   createdAt: string;
 }
 
+export interface PlaybookExecutionLog {
+  id: string;
+  sessionId: string;
+  playbookId: string;
+  runId: string | null;
+  stepIndex: number;
+  status: string;
+  errorMessage: string | null;
+  detailMessage: string | null;
+  createdAt: string;
+}
+
+export interface PlaybookRun {
+  runId: string;
+  playbookId: string;
+  status: string;
+  totalSteps: number;
+  startedAt: string;
+  logs: PlaybookExecutionLog[];
+}
+
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -29,5 +58,14 @@ export class AgentSessionService {
 
   getChatHistory(sessionId: string): Observable<{role: string, content: string}[]> {
     return this.http.get<{role: string, content: string}[]>(`${this.apiUrl}/${sessionId}/messages`);
+  }
+
+  getPlaybookLogs(sessionId: string): Observable<PlaybookExecutionLog[]> {
+    return this.http.get<PlaybookExecutionLog[]>(`${this.apiUrl}/${sessionId}/playbook-logs`);
+  }
+
+  getPlaybookRuns(sessionId: string, page: number = 0, size: number = 10): Observable<Page<PlaybookRun>> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<Page<PlaybookRun>>(`${this.apiUrl}/${sessionId}/playbook-runs`, { params });
   }
 }

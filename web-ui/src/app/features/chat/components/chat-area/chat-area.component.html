@@ -10,6 +10,25 @@
       <div *ngIf="agentMode === 'PLAYBOOK'" class="ml-2 px-2 py-1 text-xs font-bold border-round-xl flex align-items-center gap-1 shadow-1 fadein animation-duration-500" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd;">
         <i class="pi pi-code text-xs"></i>劇本執行中
       </div>
+      <button *ngIf="agentMode === 'PLAYBOOK'" 
+              pButton 
+              type="button" 
+              [icon]="isFastForwarding ? 'pi pi-pause-circle' : 'pi pi-fast-forward'" 
+              [label]="isFastForwarding ? '停止快轉' : '快轉到結束'" 
+              class="p-button-sm ml-2 fadein animation-duration-500" 
+              [ngClass]="{'p-button-danger': isFastForwarding, 'p-button-info p-button-outlined': !isFastForwarding}"
+              style="padding: 0.25rem 0.75rem; font-size: 0.875rem;"
+              (click)="toggleFastForward.emit()">
+      </button>
+      <button *ngIf="agentMode === 'PLAYBOOK'" 
+              pButton 
+              type="button" 
+              icon="pi pi-list" 
+              label="檢視流程紀錄" 
+              class="p-button-sm p-button-secondary p-button-text ml-1 fadein animation-duration-500" 
+              style="padding: 0.25rem 0.75rem; font-size: 0.875rem;"
+              (click)="showLogsSidebar = true">
+      </button>
     </div>
     
     <div class="flex gap-2">
@@ -83,4 +102,55 @@
       </div>
     </div>
   </div>
+
+  <!-- Playbook Logs Sidebar -->
+  <p-sidebar [(visible)]="showLogsSidebar" position="right" [style]="{width:'30rem'}" title="劇本執行紀錄">
+    <ng-template pTemplate="header">
+      <div class="flex align-items-center gap-2 font-bold text-lg">
+        <i class="pi pi-list"></i>
+        <span>劇本執行紀錄</span>
+      </div>
+    </ng-template>
+    <div class="p-3">
+      <div *ngIf="!playbookLogRuns || playbookLogRuns.length === 0" class="text-center p-4 text-500">
+        <i class="pi pi-info-circle text-2xl mb-2"></i>
+        <p>目前沒有任何執行紀錄</p>
+      </div>
+      
+      <div *ngFor="let runLogs of playbookLogRuns; let i = index; let last = last" class="mb-5">
+        <div class="flex align-items-center gap-2 mb-3 text-500 text-sm font-bold">
+          <i class="pi pi-history"></i> 第 {{ i + 1 }} 次執行
+        </div>
+        
+        <p-timeline [value]="runLogs" align="left" class="w-full">
+          <ng-template pTemplate="marker" let-log>
+            <span class="flex align-items-center justify-content-center text-white border-circle w-2rem h-2rem shadow-1" 
+                  [ngClass]="{'bg-green-500': log.status === 'SUCCESS', 'bg-red-500': log.status === 'FAILED', 'bg-blue-500': log.status !== 'SUCCESS' && log.status !== 'FAILED'}">
+              <i [ngClass]="{'pi pi-check': log.status === 'SUCCESS', 'pi pi-times': log.status === 'FAILED', 'pi pi-spin pi-spinner': log.status !== 'SUCCESS' && log.status !== 'FAILED'}"></i>
+            </span>
+          </ng-template>
+          <ng-template pTemplate="content" let-log>
+            <div class="p-card shadow-1 border-round mb-3 w-full">
+              <div class="p-card-body p-3">
+                <div class="flex justify-content-between align-items-center mb-2 gap-2">
+                  <span class="font-bold text-sm white-space-nowrap">步驟 {{log.stepIndex}}</span>
+                  <span class="text-xs text-500 white-space-nowrap">{{log.createdAt | date:'HH:mm:ss'}}</span>
+                </div>
+                <div class="text-sm">
+                  <span class="p-badge" [ngClass]="{'p-badge-success': log.status === 'SUCCESS', 'p-badge-danger': log.status === 'FAILED', 'p-badge-info': log.status !== 'SUCCESS' && log.status !== 'FAILED'}">
+                    {{log.status}}
+                  </span>
+                </div>
+                <div *ngIf="log.errorMessage" class="mt-2 text-xs text-red-500 bg-red-50 p-2 border-round">
+                  {{log.errorMessage}}
+                </div>
+              </div>
+            </div>
+          </ng-template>
+        </p-timeline>
+        
+        <hr *ngIf="!last" class="border-top-1 border-none surface-border my-4" />
+      </div>
+    </div>
+  </p-sidebar>
 </main>

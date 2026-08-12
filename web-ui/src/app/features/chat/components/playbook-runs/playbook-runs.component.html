@@ -1,0 +1,67 @@
+<div class="p-4 h-full overflow-auto flex flex-column gap-3">
+  <p-table [value]="runs" [lazy]="true" (onLazyLoad)="loadRuns($event)" dataKey="runId" 
+           [paginator]="true" [rows]="10" [totalRecords]="totalRecords" [loading]="loading"
+           [rowsPerPageOptions]="[10, 25, 50]" responsiveLayout="scroll" styleClass="p-datatable-sm"
+           rowExpandMode="single">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3rem"></th>
+        <th pSortableColumn="startedAt">執行時間</th>
+        <th>總步驟數</th>
+        <th>狀態</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-run let-expanded="expanded">
+      <tr>
+        <td>
+          <button type="button" pButton pRipple [pRowToggler]="run" class="p-button-text p-button-rounded p-button-plain" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></button>
+        </td>
+        <td>{{run.startedAt | date:'yyyy/MM/dd HH:mm:ss'}}</td>
+        <td>{{run.totalSteps}}</td>
+        <td><p-tag [value]="run.status" [severity]="getSeverity(run.status)"></p-tag></td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="rowexpansion" let-run>
+      <tr>
+        <td colspan="4">
+          <div class="p-3">
+            <h5>執行詳細流程</h5>
+            <p-timeline [value]="run.logs" align="alternate">
+              <ng-template pTemplate="content" let-log>
+                <p-card [header]="'步驟 ' + log.stepIndex" [style]="{ marginBottom: '1rem' }">
+                  <div class="flex flex-column gap-2">
+                    <div>
+                      <strong>狀態:</strong> <p-tag [value]="log.status" [severity]="getSeverity(log.status)"></p-tag>
+                    </div>
+                    
+                    <div *ngIf="log.errorMessage" class="text-red-500 mt-2 p-2 bg-red-50 border-round">
+                      <strong>錯誤:</strong> {{log.errorMessage}}
+                    </div>
+                    
+                    <div *ngIf="log.detailMessage" class="mt-2 text-sm text-600 bg-gray-100 p-2 border-round max-w-full overflow-hidden">
+                      <strong>AI 執行細節:</strong>
+                      <markdown [data]="log.detailMessage"></markdown>
+                    </div>
+                    
+                    <div class="text-xs text-400 mt-2">
+                      {{log.createdAt | date:'HH:mm:ss'}}
+                    </div>
+                  </div>
+                </p-card>
+              </ng-template>
+            </p-timeline>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">尚無劇本執行紀錄。</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
